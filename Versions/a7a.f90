@@ -16,9 +16,6 @@ REAL, DIMENSION(:,:), ALLOCATABLE :: array
 INTEGER :: x_position, t_frame
 	
 
-
-
-
 !----------------REFERENCE OF VARIABLES-----------------
 
 !array		motion array over time (save slices to represent over time)
@@ -32,9 +29,10 @@ INTEGER :: x_position, t_frame
 !d_t		time step size (s)
 
 
+!	***ACTION***	change variable names for demonstrators!
+!			full width half maximum
 
 !----------------END OF REFERENCE-----------------
-
 
 
 	c_dfsn = 1.1
@@ -104,9 +102,6 @@ WRITE(6,*) 'CHECK  3'
 !LOOP OVER INSTANCES OF TIME (FRAMES)
 DO k=1, steps
 
-!TAKE ONLY CERTAIN VALUES FOR 3D PLOT
-!IF(int(k/100)==int(k/100)) array(i, (k/100)) = temp(i)
-
 !SECOND ORDER DIFF IN SPACE
 	DO j=(-n+1),n-1
 		dx_temp(j) = ((temp(j+1))-(2.0*temp(j))+(temp(j-1)))/(d_r**2.0)									
@@ -134,14 +129,13 @@ WRITE(6,*) 'CHECK   5'
 
 
 
-!write end point array to file
+!OUTPUT:end values (loop cycles over x-position)
 	DO i=-n,n	
-!WRITE TO FILE
 		WRITE(12,*) x(i),temp(i)
 		WRITE(12,*)
 	END DO 
 
-!write end point array to file
+!OUTPUT:temperature distribution over time (loop 'samples' the data every 1000th value to save memory)
 	DO k=1,steps,1000
 		DO  i=-n,n
 			WRITE(13,*) x(i), k, array(i,k) 		

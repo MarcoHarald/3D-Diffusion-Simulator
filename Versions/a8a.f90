@@ -4,16 +4,17 @@
 PROGRAM pdes
 IMPLICIT NONE
 
-INTEGER,PARAMETER :: n=300
-INTEGER :: i, j, k, steps
-REAL :: x(-n:n),tolerance,temp(-n:n),dx_temp(-n:n),dt_temp(-n:n)    ! array(-n:n,0:100)
+INTEGER,PARAMETER :: n=300, m=300
+INTEGER :: i, j, k,l, steps
+REAL :: x(-n:n),y(-m:m),tolerance,temp(-n:n,-m:m),dx_temp(-n:n),dy_temp(-m:m),dt_temp(-n:n, -m:m)    ! array(-n:n,0:100)
 REAL :: c_dfsn,c_r,d_r,d_t, temp0, temp1,t_siml	
 
+CHARACTER :: checkBreak
 
 !2-dimensional array of INTEGERS with size to be allocated
-REAL, DIMENSION(:,:), ALLOCATABLE :: array
+REAL, DIMENSION(:,:,:), ALLOCATABLE :: array
 !allocatable integers to define dimensions
-INTEGER :: x_position, t_frame
+INTEGER :: x_position,y_position, t_frame
 	
 
 !----------------REFERENCE OF VARIABLES-----------------
@@ -37,7 +38,7 @@ INTEGER :: x_position, t_frame
 	c_dfsn = 1.1
 	c_r = 1.0
 	d_r = 0.1
-	d_t = 1.0e-4
+	d_t = 1.0e-2
 
 	!CONNECT FILES FOR INPUT/OUTPUT
 	OPEN(UNIT=12, FILE="dif.dat")
@@ -55,7 +56,7 @@ temp1 = 0.0
 temp0 = 20.0
 
 !SET SIMULATION LENGTH (s)
-t_siml = 5.0
+t_siml = 20.0
 
 
 !INITIATE STEPS VARIABLE
@@ -63,10 +64,11 @@ steps = int(real(t_siml)/d_t)
 WRITE(6,*) '# OF STEPS: ', steps
 
 !DETERMINE ALLOCATABLE ARRAY DIMENSIONS
-	x_position = 300
+	x_position = n
+	y_position = m
 	t_frame = steps
 	 
-ALLOCATE(array(-x_position:x_position,t_frame)) 
+ALLOCATE(array(-x_position:x_position,-y_position:y_position,t_frame)) 
 !DEALLOCATE(array)
 
 
@@ -74,24 +76,33 @@ ALLOCATE(array(-x_position:x_position,t_frame))
 WRITE(6,*) 'CHECK   2'
 !***********************
 
+!DEFINE EXACT VALUE OF COORDINATES ON TWO AXES
+DO i=-n,n
+x(i)=REAL(i)*d_r
+END DO
+
+DO i=-m,m
+y(i)=REAL(i)*d_r
+END DO
 
 !CHECK IF COORDINATE IS INSIDE INITIAL CONDITION & SET IT TO BC
 !INITIALISE FIRST 'ARRAY' VALUES (INITIAL CONDITIONS)
-DO i=-n,n
-	x(i)=REAL(i)*d_r
-	IF(x(i)**2.0<c_r**2.0+tolerance) THEN
-			temp(i)=temp0
-			array(i, 1)=temp(i)
-	ELSEIF(x(i)>-29.0 .AND. x(i)<-27.0+tolerance) THEN
-			temp(i)=temp0
-			array(i, 1)=temp(i)
+DO j=-m,m	
+	DO i=-n,n
+	
+		IF(x(i)**2.0<c_r**2.0+tolerance .AND. y(j)**2.0<c_r**2.0+tolerance) THEN
+				temp(i,j)=temp0
+				array(i, j, 1)=temp(i,j)
+		!ELSEIF(x(i)>-29.0 .AND. x(i)<-27.0+tolerance) THEN
+		!		temp(i)=temp0
+		!		array(i, j, 1)=temp(i)
 
-		ELSE
-			temp(i)=temp1
-			array(i, 1)=temp(i)
-	END IF 
+			ELSE
+				temp(i,j)=temp1
+				array(i, j, 1)=temp(i,j)
+		END IF 
+	END DO
 END DO
-
 
 !***********************
 WRITE(6,*) 'CHECK  3'
@@ -100,19 +111,42 @@ WRITE(6,*) 'CHECK  3'
 
 !LOOP OVER INSTANCES OF TIME (FRAMES)
 DO k=1, steps
+!GRADIENT OF TEMP CHANGE WITH RESPECT TO TIME [ x ]
+	DO l=(-m+1),m-1
+		DO j=(-n+1),n-1
 
-!SECOND ORDER DIFF IN SPACE
-	DO j=(-n+1),n-1
-		dx_temp(j) = ((temp(j+1))-(2.0*temp(j))+(temp(j-1)))/(d_r**2.0)									
-	END DO
+!-----------------------
+WRITE(6,*) k,'b'
+WRITE(6,*) '(d_r**2.0)',(d_r**2.0)
+WRITE(6,*) '(temp(j+1,l)', (temp(j+1,l))
+WRITE(6,*) '(2.0*temp(j,l))', (2.0*temp(j,l))
+WRITE(6,*) '(temp(j-1,l))', (temp(j-1,l))
+WRITE(6,*) 
+WRITE(6,*)
+!------------------------
+
+			dx_temp(j) = ((temp(j+1,l))-(2.0*temp(j,l))+(temp(j-1,l)))/(d_r**2.0)
+
+!------------------------
+WRITE(6,*) k,'c'
+!------------------------
+			dy_temp(l) = ((temp(j,l+1))-(2.0*temp(j,l))+(temp(j,l-1)))/(d_r**2.0)	
+							
+		END DO
+!WRITE(6,*) 'Continue?   [INSERT CHARACTER]'
+!READ(5,*)checkBreak	
+	
+END DO
+
 
 !RATE OF CHANGE OF TEMP WITH RESPECT TO TIME & ITERATE TO ACCOUNT FOR CHANGE IN TEMP
-	DO i=-n+1,n-1
-		dt_temp(i) = c_dfsn*dx_temp(i)
-		temp(i) = temp(i) + (d_t*dt_temp(i))
-		array(i,k) = temp(i) 
+	DO l=-m+1, m-1	
+		DO i=-n+1,n-1
+			dt_temp(i,l) = c_dfsn*dx_temp(i)+c_dfsn*dy_temp(l)
+			temp(i,l) = temp(i,l) + (d_t*dt_temp(i,l))
+			array(i,l,k) = temp(i,l) 
+		END DO
 	END DO
-
 END DO
 
 !***********************
@@ -128,18 +162,19 @@ WRITE(6,*) 'CHECK   5'
 
 
 
-!OUTPUT:end values (loop cycles over x-position)
+!OUTPUT:end values (loop cycles over x-position & then y-position)
+DO l=-m,m	
 	DO i=-n,n	
-		WRITE(12,*) x(i),temp(i)
+		WRITE(12,*) x(i), y(l),temp(i,l)
 		WRITE(12,*)
 	END DO 
-
+END DO
 !OUTPUT:temperature distribution over time (loop 'samples' the data every 1000th value to save memory)
 	DO k=1,steps,1000
 		DO  i=-n,n
-			WRITE(13,*) x(i), k, array(i,k) 		
+			WRITE(13,*) x(i), array(i,0,k) 		
 		END DO
-
+!leave gap
 		WRITE(13,*)
 	END DO
 
