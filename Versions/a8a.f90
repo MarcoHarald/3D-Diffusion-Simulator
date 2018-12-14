@@ -90,15 +90,13 @@ WRITE(6,*) 'CHECK   2'
 DO j=-m,m	
 	DO i=-n,n
 		IF(x(i)**2.0<c_r**2.0+tolerance .AND. y(j)**2.0<c_r**2.0+tolerance) THEN
-				temp(i,j)=temp0
-				array(i, j, 1)=temp(i,j)
+				array(i, j, 1)=temp0
 		!ELSEIF(x(i)>-29.0 .AND. x(i)<-27.0+tolerance) THEN
 		!		temp(i)=temp0
 		!		array(i, j, 1)=temp(i)
 
 			ELSE
-				temp(i,j)=temp1
-				array(i, j, 1)=temp(i,j)
+				array(i, j, 1)=temp1
 		END IF 
 	END DO
 END DO
@@ -109,7 +107,7 @@ WRITE(6,*) 'CHECK  3'
 !OUTPUT:end values (loop cycles over x-position & then y-position)
 DO l=-m,m	
 	DO i=-n,n	
-		WRITE(12,*) x(i), y(l),temp(i,l)
+		WRITE(12,*) x(i), y(l),array(i,j,1)
 	END DO 
 
 	WRITE(12,*)
@@ -133,12 +131,12 @@ END DO
 
 
 !LOOP OVER INSTANCES OF TIME (FRAMES)
-DO k=1, steps
+DO k=2, steps
 !GRADIENT OF TEMP CHANGE WITH RESPECT TO TIME [ x ]
 	DO l=(-m+1),m-1
 		DO j=(-n+1),n-1
-			dx_temp(j) = ((temp(j+1,l))-(2.0*temp(j,l))+(temp(j-1,l)))/(d_r**2.0)
-			dy_temp(l) = ((temp(j,l+1))-(2.0*temp(j,l))+(temp(j,l-1)))/(d_r**2.0)	
+			dx_temp(j) = ((array(j+1,l,1))-(2.0*array(j,l,1))+(array(j-1,l,1)))/(d_r**2.0)
+			dy_temp(l) = ((array(j,l+1,1))-(2.0*array(j,l,1))+(array(j,l-1,1)))/(d_r**2.0)	
 		END DO
 	END DO
 
@@ -146,8 +144,7 @@ DO k=1, steps
 	DO l=-m+1, m-1	
 		DO i=-n+1,n-1
 			dt_temp(i,l) = c_dfsn*dx_temp(i)+c_dfsn*dy_temp(l)
-			temp(i,l) = temp(i,l) + (d_t*dt_temp(i,l))
-			array(i,l,k) = temp(i,l) 
+			array(i,l,k) = array(i,l,k-1) + (d_t*dt_temp(i,l))
 		END DO
 	END DO
 END DO
@@ -167,7 +164,7 @@ WRITE(6,*) 'CHECK   5'
 !OUTPUT:end values (loop cycles over x-position & then y-position)
 DO l=-m,m	
 	DO i=-n,n	
-		WRITE(14,*) x(i), y(l),temp(i,l)
+		WRITE(14,*) x(i), y(l),array(i,l,steps-1)
 	END DO 
 
 	WRITE(14,*)
