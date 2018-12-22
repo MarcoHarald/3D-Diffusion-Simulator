@@ -140,39 +140,21 @@ END DO
 
 
 !LOOP OVER INSTANCES OF TIME (FRAMES)
-DO k=2, steps
+DO k=1, steps
 !GRADIENT OF TEMP CHANGE WITH RESPECT TO TIME [ x ]
 	DO l=(-m+1),m-1
 		DO j=(-n+1),n-1
 			dx_temp(j,l) = ((array(j+1,l,k))-(2.0*array(j,l,k))+(array(j-1,l,k)))/(d_r*d_r)
 			dy_temp(j,l) = ((array(j,l+1,k))-(2.0*array(j,l,k))+(array(j,l-1,k)))/(d_r*d_r)	
 			
-			!-----------------------
-			!WRITE(16,*) k,array(j+1,l,1),(2.0*array(j,l,1)),array(j-1,l,1)
-			!-----------------------
-					
-			!-----------------------
-				IF(dx_temp(j,l)>tolerance .OR. dy_temp(j,l)>tolerance) THEN
-					WRITE(15,*) k, dx_temp,dy_temp			
-				ENDIF
-			!-----------------------
-		
 		END DO
 	END DO
-
-	!-----------------------
-	!WRITE(16,*)
-	!-----------------------
-	!-----------------------
-	!WRITE(15,*)
-	!-----------------------
-
 
 !RATE OF CHANGE OF TEMP WITH RESPECT TO TIME & ITERATE TO ACCOUNT FOR CHANGE IN TEMP
 	DO l=-m+1, m-1	
 		DO i=-n+1,n-1
 			dt_temp(i,l) = c_dfsn*dx_temp(i,l)+c_dfsn*dy_temp(i,l)
-			array(i,l,k) = array(i,l,k-1) + (d_t*dt_temp(i,l))
+			array(i,l,k+1) = array(i,l,k) + (d_t*dt_temp(i,l))
 		END DO
 	END DO
 END DO
