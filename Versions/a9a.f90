@@ -53,6 +53,10 @@ INTEGER :: x_position,y_position,z_position, t_frame, stepSize
 	OPEN(UNIT=24, FILE="et3.dat")
 	OPEN(UNIT=25, FILE="et4.dat")
 	OPEN(UNIT=26, FILE="et5.dat")
+	OPEN(UNIT=30, FILE="initVal.dat")
+	OPEN(UNIT=31, FILE="val1.dat")
+	OPEN(UNIT=32, FILE="val2.dat")
+	OPEN(UNIT=33, FILE="val3.dat")
 
 !***********************
 WRITE(6,*) 'CHECK   1'
@@ -134,6 +138,29 @@ DO z=-z0,z0
 	END DO
 	WRITE(12,*)
 END DO
+
+!OUTPUT:initial values for orthogonal planes on each axes (set x,y,z to 0 sequentially)
+	z=0	
+	DO y=1-y0,y0-1	
+		DO x=1-x0,x0-1
+			WRITE(30,*) xAxis(x), yAxis(y),zAxis(z),array(x,y,z,1)
+		END DO 
+		WRITE(30,*)
+	END DO
+	WRITE(30,*)
+
+	bound = 4.0
+
+	DO x=int(-x0+x0/bound),int(x0-1),int(2*x0/bound)	
+		DO z=0,z0-1
+			DO y=1-y0,y0-1
+				WRITE(30,*) xAxis(x), yAxis(y),zAxis(z),array(x,y,z,1)
+			END DO
+			WRITE(30,*)
+		END DO
+		WRITE(30,*)
+	END DO
+	WRITE(30,*)
 
 
 !***********************
@@ -226,11 +253,28 @@ WRITE(16,*)
 
 
 !OUTPUT:temperature distribution for a slice of the 3D space, over time (loop 'samples' the data every 1000th value to save memory)
-	DO k=1,steps,1000
-		DO  x=1-x0,x0-1
-			WRITE(13,*) xAxis(x),yAxis(0),zAxis(0),k,array(x,0,0,k) 		
+	DO k=1,3
+		z=0	
+		DO y=1-y0,y0-1	
+			DO x=1-x0,x0-1
+				WRITE(30+k,*) xAxis(x), yAxis(y),zAxis(z),array(x,y,z,int(k*steps/3))
+			END DO 
+			WRITE(30+k,*)
 		END DO
-		WRITE(13,*)
+		WRITE(30+k,*)
+
+		bound = 4.0
+
+		DO x=int(-x0+x0/bound),int(x0-1),int(2*x0/bound)	
+			DO z=0,z0-1
+				DO y=1-y0,y0-1
+					WRITE(30+k,*) xAxis(x), yAxis(y),zAxis(z),array(x,y,z,int(k*steps/3))
+				END DO
+				WRITE(30+k,*)
+			END DO
+			WRITE(30+k,*)
+		END DO
+		WRITE(30+k,*)
 	END DO
 
 !***********************
