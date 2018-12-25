@@ -28,17 +28,18 @@ float temp1 = 20.0, temp0 = 100.0;
 float t_siml = 10.0;
 
 ///DEFINE EXACT VALUE OF COORDINATES ON THREE AXES
+///DEFINE EXACT VALUE OF COORDINATES ON THREE AXES
 
 class axis{
         int limit;
     void setLimit(int limit);
     float setAxis() {
-        float axis[2*limit]
+        float axis[2*limit];
         int i=-(limit);
         do {
-            xAxis[i]=static_cast<int>(i)*stepDist;
+            axis[i]=static_cast<int>(i)*stepDist;
             i++;
-        } while(i<xLimit);
+        } while(i<limit);
     }
 };
 
@@ -60,43 +61,3 @@ int main () {
 
     return 0;
 }
-
-
-
-
-
-
-
-float setXAxis(int xLimit);
-
-float setXAxis()
-    float xAxis[2*xLimit]
-    int i=-(xLimit);
-    do {
-        xAxis[i]=static_cast<int>(i)*stepDist;
-        i++;
-    } while(i<xLimit);
-
-class defCoord () {
-    public:
-        void setXAxis(float xAxis[2*xLimit])
-    int i=-(xLimit);
-    do {
-        xAxis[i]=static_cast<int>(i)*stepDist;
-        i++;
-    } while(i<xLimit);
-        
-    i=-yLimit;
-    do {
-        yAxis(i)=static_cast<int>(i)*stepDist;
-        i++;
-    } while(i<yLimit);
-
-    i=-zLimit;
-    do {
-        zAxis(i)=static_cast<int>(i)*stepDist;
-        i++;
-    } while(i<zLimit);
-
-}
-

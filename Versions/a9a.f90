@@ -147,7 +147,7 @@ DO k=0, steps-1
 		DO y=1-y0,y0-1	
 			DO x=1-x0,x0-1
 				dt_temp(x,y,z) = constDfsn*dx_temp(x,y,z)+constDfsn*dy_temp(x,y,z)+constDfsn*dz_temp(x,y,z)
-				IF(dt_temp(z,y,z)>1.0E-24) THEN
+				IF(dt_temp(z,y,z)>1.0E-9) THEN
 					array(x,y,z,k+1) = array(x,y,z,k) + (stepTime*dt_temp(x,y,z))
 					WRITE(6,*) k, dt_temp(x,y,z)
 				ELSE
