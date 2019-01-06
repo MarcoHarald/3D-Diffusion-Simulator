@@ -47,7 +47,8 @@ INTEGER :: x_position,y_position,z_position, t_frame, stepSize
 	OPEN(UNIT=12, FILE="initAll.dat")
 	OPEN(UNIT=13, FILE="endAll.dat")
 	OPEN(UNIT=14, FILE="initSlice.dat")
-	OPEN(UNIT=15, FILE="endSlice.dat")
+    OPEN(UNIT=15, FILE="endSlice.dat")
+    OPEN(UNIT=16, FILE="fwhm.dat")
 	OPEN(UNIT=30, FILE="val0.dat")
 	OPEN(UNIT=31, FILE="val1.dat")
 	OPEN(UNIT=32, FILE="val2.dat")
@@ -110,16 +111,6 @@ DO z=-z0,z0
 		DO x=-x0,x0
 			IF((xAxis(x)**2+yAxis(y)**2+zAxis(z)**2)<initRad**2) THEN
 				array(x,y,z,0)=temp0
-				WRITE(6,*) 'inital conditions coord',X,Y,Z			
-	!		IF(abs(xAxis(x))<initRad+tolerance .AND. abs(yAxis(y))<initRad+tolerance .AND. abs(zAxis(z))<initRad+tolerance) THEN
-	!			array(x,y,z,0)=temp0
-	!			WRITE(6,*) 'inital conditions coord',X,Y,Z
-	!		IF((xAxis(x))>x0-initRad2+tolerance .AND. (yAxis(y))>y0-initRad2+tolerance .AND. (zAxis(z))>z0-initRad2+tolerance) THEN
-	!			array(x,y,z,0)=temp0
-	!			WRITE(6,*) 'inital conditions coord',X,Y,Z
-	!		ELSEIF((xAxis(x))<-x0+initRad2+tolerance .AND. (yAxis(y))<-y0+initRad2+tolerance .AND. (zAxis(z))>z0-initRad2+tolerance) THEN
-	!			array(x,y,z,0)=temp0
-	!			WRITE(6,*) 'inital conditions coord',X,Y,Z
 			ELSE
 				array(x,y,z,0)=temp1
 			ENDIF 
@@ -137,9 +128,9 @@ DO k=0, steps-1
 	DO z=1-z0,z0-1
 		DO y=1-y0,y0-1	
 			DO x=1-x0,x0-1
-				dx_temp(x,y,z) = (array(x+1,y,z,k)-(2.0*array(x,y,z,k))+array(x-1,y,z,k))!/(stepDist*stepDist)
-				dy_temp(x,y,z) = (array(x,y+1,z,k)-(2.0*array(x,y,z,k))+array(x,y-1,z,k))!/(stepDist*stepDist)
-				dz_temp(x,y,z) = (array(x,y,z+1,k)-(2.0*array(x,y,z,k))+array(x,y,z-1,k))!/(stepDist*stepDist)					
+				dx_temp(x,y,z) = (array(x+1,y,z,k)-(2.0*array(x,y,z,k))+array(x-1,y,z,k))/(stepDist**2)
+				dy_temp(x,y,z) = (array(x,y+1,z,k)-(2.0*array(x,y,z,k))+array(x,y-1,z,k))/(stepDist**2)
+				dz_temp(x,y,z) = (array(x,y,z+1,k)-(2.0*array(x,y,z,k))+array(x,y,z-1,k))/(stepDist**2)				
 			END DO
 		END DO
 	END DO
@@ -148,14 +139,8 @@ DO k=0, steps-1
 	DO z=1-z0,z0-1
 		DO y=1-y0,y0-1	
 			DO x=1-x0,x0-1
-				dt_temp(x,y,z) = (dx_temp(x,y,z)+dy_temp(x,y,z)+dz_temp(x,y,z))
-				dt_temp(x,y,z) = dt_temp(x,y,z)*constDfsn
-				dt_temp(x,y,z) = dt_temp(x,y,z)/(stepDist*stepDist)
-
-				IF(dt_temp(x,y,z)>2.0 .AND. k<4) THEN
-					WRITE(6,*) 'dt_temp (K,X,Y,Z):',k,X,Y,Z, dt_temp(x,y,z)
-				ENDIF
-				
+                dt_temp(x,y,z) = constDfsn*(dx_temp(x,y,z)+dy_temp(x,y,z)+dz_temp(x,y,z))
+                
 				!to eliminate any binary number errors, only values above a threshold are accepted (above the double precision number precision of 15 significant figures)
 				IF(abs(dt_temp(x,y,z))>1.0E-8) THEN
 					array(x,y,z,k+1) = array(x,y,z,k) + (stepTime*dt_temp(x,y,z))
@@ -165,9 +150,6 @@ DO k=0, steps-1
 				ENDIF
 			END DO
 		END DO
-		!CHECK--------------------------
-		!WRITE(6,*) k, dt_temp(2,2,2)
-		!-------------------------------
 	END DO
 
 !ADJUST TEMPERATURE AT EDGES OF SIMULATION-SPACE TO EMULATE AN INFINITELY LARGE SPACE
@@ -223,7 +205,8 @@ DO k=0, steps-1
 			END DO
 		END DO
 
-	z=z0
+    
+        z=z0
 	DO y=1-y0,y0-1	
 		DO x=1-x0,x0-1
 			IF (abs(dt_temp(x,y,z-1))>= 0+tolerance) THEN
@@ -246,7 +229,6 @@ WRITE(6,*) 'boundInt:   ', x0
 
 ALLOCATE(gaussian(-boundInt:boundInt)) 
 ALLOCATE(fwhm(0:steps)) 
-
 
 DO k=1, steps
 !ASSIGN ONE AXIS TO SEPARATE ARRAY TO DETERMINE MAX VAL
@@ -293,11 +275,14 @@ DO k=1, steps
 	fwhm(k) = real(highVal-lowVal)*stepDist
 END DO
 
-
 !***********************
 WRITE(6,*) 'CHECK   5'
 !***********************
 
+!OUTPUT: print all FWHM values to file
+DO i = 1, steps
+    WRITE(16,*) real(i)*stepTime, fwhm(i) 
+END DO
 !OUTPUT: all initial & end values (loop cycles over x-position & then y-position)
 	DO k=0,1
 		DO z=1-z0,z0-1
